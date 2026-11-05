@@ -29,7 +29,7 @@ for i = fileIdx
     Name     = files(i).name;
     data     = readRawCSV(filename);
 
-    [t, rawX, rawY, rawXY, ~, ~, ~, ~, Fs] = readLoadCellData(data);
+    [t, rawX, rawY, rawXY, Fs] = readLoadCellData(data);
 
     % ---- Filter: FFT low-pass, then Savitzky-Golay ----
     [xF, yF] = filterData(rawX, rawY, t, Fs, f_cutoff);

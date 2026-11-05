@@ -1,4 +1,4 @@
-function [t, x, y, xy, ax, ay, az, a, Fs] = readLoadCellData(data)
+function [t, x, y, xy,Fs, ax, ay, az, a] = readLoadCellData(data)
 %READLOADCELLDATA Load cell (X/Y) and IMU acceleration from a data table.
 %
 % Input:
