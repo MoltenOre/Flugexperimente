@@ -1,4 +1,4 @@
-function PlotAltitudeData(data, fc_gps)
+function plotAltitudeData(data, fc_gps)
     % data:   table with columns TIME, NAME, UID, VAR, RAW, UNIT
     % fc_gps: FFT cutoff for GPS altitude [Hz] (default 0.05 Hz = 20 s period)
     if nargin < 2, fc_gps = 0.05; end
