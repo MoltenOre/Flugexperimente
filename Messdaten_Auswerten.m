@@ -2,18 +2,20 @@ clear; clc; close all;
 
 %% ===================== SETTINGS =========================
 addpath(genpath('func'));
-dataFolder  = './Daten/F4/';
-fileIdx     = 1;            % which file(s): 1, 1:3, or 'all'
+dataFolder  = './Daten/Platzrunde/';
+fileIdx     = 2;            % which file(s): 1, 1:3, or 'all'
 
-f_cutoff    = 3.5;          % FFT cutoff frequency [Hz]
+f_cutoff    = 0.25;          % FFT cutoff frequency [Hz]
 sgWindow    = 201;          % Savitzky-Golay window [samples]
 
 % Plot switches
 plotRawData = false;        % show raw data in the plots
 showLoad    = true;         % load cell plots
-showFFT     = false;        % FFT plots
-showGPS     = true;         % GPS velocity
-showAlt     = true;         % altitude check
+showFFT     = true;        % FFT plots
+showGPS     = false;         % GPS velocity
+showAlt     = false;         % altitude check
+saveFig     = true;
+aspectRatio = 4/3;
 
 %% ===================== FILES =========================
 files = dir(fullfile(dataFolder, '*.csv'));
@@ -39,7 +41,7 @@ for i = fileIdx
 
     % ---- Plots ----
     if showLoad
-        plotLoadCells(t, rawX, rawY, xF, yF, rawXY, xyF, plotRawData, Name);
+        plotLoadCells(t, rawX, rawY, xF, yF, rawXY, xyF, plotRawData, Name, saveFig, './Plots/', aspectRatio);
     end
     if showFFT
         plotFFT(rawX, rawY, xF, yF, Fs, f_cutoff, t, Name, plotRawData);
