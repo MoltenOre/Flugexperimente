@@ -1,54 +1,53 @@
-clear;
-clc;
-close all;
+clear; clc; close all;
 
-%% ===================== EINSTELLUNGEN =========================
+%% ===================== SETTINGS =========================
+addpath(genpath('func'));
+dataFolder  = './Daten/F4/';
+fileIdx     = 1;            % which file(s): 1, 1:3, or 'all'
 
-dataFolder = './Daten/F4/';
+f_cutoff    = 3.5;          % FFT cutoff frequency [Hz]
+sgWindow    = 201;          % Savitzky-Golay window [samples]
+
+% Plot switches
+plotRawData = false;        % show raw data in the plots
+showLoad    = true;         % load cell plots
+showFFT     = false;        % FFT plots
+showGPS     = true;         % GPS velocity
+showAlt     = true;         % altitude check
+
+%% ===================== FILES =========================
 files = dir(fullfile(dataFolder, '*.csv'));
-%i = 4;
-% FFT-Grenzfrequenz [Hz]
-f_cutoff = 3.5;
+if ischar(fileIdx) || isstring(fileIdx)      % 'all'
+    fileIdx = 1:numel(files);
+end
 
-plotRawData = false;
-for i = 1%1:length(files)
-    
-%%% ===================== Daten Lesen =========================  
-    filename = fullfile(files(i).folder,files(i).name);
-    Name = files(i).name;  
-    
-    data = readRawCSV(filename);
+%% ===================== EVALUATION =========================
+for i = fileIdx
 
-    [t, rawX, rawY, rawXY, rawAX, rawAY, rawAz, a, Fs] = readLoadCellData(data);
-    x_filtered = rawX;
-    y_filtered = rawY;
+    % ---- Read ----
+    filename = fullfile(files(i).folder, files(i).name);
+    Name     = files(i).name;
+    data     = readRawCSV(filename);
 
+    [t, rawX, rawY, rawXY, ~, ~, ~, ~, Fs] = readLoadCellData(data);
 
+    % ---- Filter: FFT low-pass, then Savitzky-Golay ----
+    [xF, yF] = filterData(rawX, rawY, t, Fs, f_cutoff);
+    xF = smoothdata(xF, 'sgolay', sgWindow);
+    yF = smoothdata(yF, 'sgolay', sgWindow);
+    xyF = hypot(xF, yF);
 
-%%% ===================== FFT Filtern =========================  
-
-    [x_filtered,y_filtered] = filterData(x_filtered, y_filtered, t, Fs, f_cutoff);
-
-%%%===================== Savitzky-Golay-Filter ========================= 
-    
-    x_filtered = smoothdata(x_filtered, 'sgolay', 201);
-    y_filtered = smoothdata(y_filtered, 'sgolay', 201);
-
-%%%===================== Daten Plotten ========================= 
-    xy_filtered = sqrt(x_filtered.^2+y_filtered.^2);
-    
-    
-    plotLoadCells(t, rawX, rawY, x_filtered,y_filtered, ...
-                           rawXY, xy_filtered, plotRawData,Name)
-    
-    %plotFFT(rawX,rawY,x_filtered,y_filtered,Fs,f_cutoff,t,Name,plotRawData);
-    
-
- %%%===================== GPS =========================   
- plotGPSVelocity(data);  
-
- %%%===================== Alti =========================  
- PlotAltitudeData(data);
-
-
+    % ---- Plots ----
+    if showLoad
+        plotLoadCells(t, rawX, rawY, xF, yF, rawXY, xyF, plotRawData, Name);
+    end
+    if showFFT
+        plotFFT(rawX, rawY, xF, yF, Fs, f_cutoff, t, Name, plotRawData);
+    end
+    if showGPS
+        plotGPSVelocity(data);
+    end
+    if showAlt
+        plotAltitudeData(data);
+    end
 end
