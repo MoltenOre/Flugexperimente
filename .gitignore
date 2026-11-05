@@ -1,0 +1,21 @@
+# Measurement data (large CSV files)
+Daten/
+*.csv
+
+# MATLAB autosave and temp files
+*.asv
+*.m~
+*.autosave
+
+# MATLAB generated files
+*.mex*
+slprj/
+*.slxc
+
+# Figures / exports (optional)
+*.fig
+*.png
+
+# OS files
+.DS_Store
+Thumbs.db
