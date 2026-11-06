@@ -1,12 +1,13 @@
 function plotLoadCells(t, xRaw, yRaw, xFiltered, yFiltered, ...
                        totalRaw, totalFiltered, plotRawData, Name, ...
-                       saveFig, outputFolder, aspectRatio, widthCm)
+                       saveFig, outputFolder, aspectRatio, widthCm, plotTitle)
 %PLOTLOADCELLS Total force, pitch (X) and roll (Y) force of the stick.
 
     if nargin < 10 || isempty(saveFig),      saveFig = false;           end
     if nargin < 11 || isempty(outputFolder), outputFolder = './Plots/'; end
     if nargin < 12 || isempty(aspectRatio), aspectRatio = 15/11; end   % Breite/Höhe
     if nargin < 13 || isempty(widthCm),     widthCm     = 15;    end   % Breite in cm
+     if nargin < 14, plotTitle = ''; end
 
     Name   = erase(Name, ".csv");
     orange = [1 0.5 0];
@@ -16,6 +17,10 @@ function plotLoadCells(t, xRaw, yRaw, xFiltered, yFiltered, ...
     fig = figure('Name', Name, 'NumberTitle', 'off', 'Color', 'w', ...
                  'Units', 'centimeters', 'Position', [2 2 widthCm heightCm]);
     tl = tiledlayout(fig, 2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+
+    if ~isempty(plotTitle)
+        title(tl, plotTitle, 'FontWeight', 'bold', 'FontSize', 10);
+    end
 
     % ---- Total force ----
     ax1 = nexttile(tl, 1, [1 2]);
@@ -49,6 +54,8 @@ function plotLoadCells(t, xRaw, yRaw, xFiltered, yFiltered, ...
     ylabel(ax3, 'Force in Y [N]');
     title(ax3, 'Kraft um die Roll-Achse');
 
+    
+
     % ---- Save as SVG ----
     if saveFig
         if ~exist(outputFolder, 'dir'), mkdir(outputFolder); end
@@ -57,7 +64,7 @@ function plotLoadCells(t, xRaw, yRaw, xFiltered, yFiltered, ...
         set(fig, 'PaperUnits', 'centimeters', ...
                  'PaperSize',  [widthCm heightCm], ...
                  'PaperPosition', [0 0 widthCm heightCm]);
-        print(fig, fullfile(outputFolder, [fileName '.svg']), '-dsvg', '-painters');
+        print(fig, fullfile(outputFolder, [fileName '.svg']), '-dsvg', '-vector');
     end
 end
 
