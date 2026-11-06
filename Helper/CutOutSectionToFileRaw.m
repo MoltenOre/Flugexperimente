@@ -1,12 +1,12 @@
 %% Cut a section from a CSV file based on time
 
 % Input / Output
-src = "./Daten/F3/MessDaten_F3_WindUp_Stal   l.csv";
-dst = "./Daten/cut_out/Stall_Flaps.csv";
+src = "./../Daten/Stall/Stall_noF.csv";
+dst = "./../Daten/Stall/Stall_No-Flaps-2.csv";
 
 % Start and end time in seconds relative to the first timestamp
-startSec = 690;
-endSec   = 823;
+startSec = 31;
+endSec   = 64;
 
 % Timestamp format in the first field
 fmt = "MM/dd/yyyy HH:mm:ss.SSS";
