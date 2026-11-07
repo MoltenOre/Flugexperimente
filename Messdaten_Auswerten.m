@@ -2,8 +2,8 @@ clear; clc; close all;
 
 %% ===================== SETTINGS =========================
 addpath(genpath('func'));
-dataFolder  = './Daten/WindUp/';
-fileIdx     = 3;            % which file(s): 1, 1:3, or 'all'
+dataFolder  = './Daten/Stall/';
+fileIdx     =3;            % which file(s): 1, 1:3, or 'all'
 
 f_cutoff    = 4;          % FFT cutoff frequency [Hz]
 sgWindow    = 201;          % Savitzky-Golay window [samples]
@@ -18,6 +18,8 @@ showAcc     = true;
 showBank    = false;
 showFligtStats = true;
 
+rotateInput = true;
+
 showForce   = false;
 %tWindow     = [2,51];      
 %tWindow     = [11,40]; %Steep Turn Left    
@@ -29,10 +31,21 @@ plotFolder  = "./Plots/"+erase(dataFolder, './Daten/');
 
 
 %% WindUp
-tWindow  = [9 12.5; 21 25; 29 34.5; 37.5 42; 43.8 47.8]; %R
+%tWindow  = [9 12.5; 21 25; 29 34.5; 37.5 42; 43.8 47.8]; %R
 %tWindow  = [15.5 21; 27.5 30.5; 34 37.5; 44 47.5; 50.5 55]; %L
 %tWindow  = [35.5 38.5; 44.5 48.5; 50.5 53.5; 57 61.5; 64 67]; %2
-names = ["10°" "20°" "30°" "45°" "60°"];
+%names = ["10°" "20°" "30°" "45°" "60°"];
+
+%% Speed Variation
+%tWindow     = [4,34;42,60];
+%names       = ["Acceleration", "Deacceleration"];
+
+%% Stall
+tWindow     = [3 55]; %l1
+%tWindow     = [23,55];%r2
+%tWindow     = [5,57]; %Flaps
+winStall    = tWindow;     % Beispiel: von 20 s bis 30 s
+names       = ["Stall"];
 
 
 %% ===================== FILES =========================
@@ -59,6 +72,43 @@ for i = fileIdx
     xyF = hypot(xF, yF);
 
     % ---- Plots ----
+    if rotateInput
+        xF0 = xF;  yF0 = yF;                                   % Originale merken
+    
+        % Drehung bestimmen und anwenden
+        [xF, yF, phi] = derotateForces(t, xF0, yF0, winStall);
+        fprintf('Drehkorrektur %s: %.1f°\n', Name, rad2deg(phi));
+    
+        % Dieselbe Drehung auf die Rohdaten (nur nötig, wenn plotRawData = true)
+        if plotRawData
+            rawXr =  rawX*cos(phi) + rawY*sin(phi);
+            rawYr = -rawX*sin(phi) + rawY*cos(phi);
+            rawX = rawXr;  rawY = rawYr;
+        end
+        % Vorher / Nachher nebeneinander
+        m = t >= winStall(1) & t <= winStall(2);
+        figure('Color','w','Units','centimeters','Position',[2 2 18 8]);
+        tl = tiledlayout(1,2,'TileSpacing','compact','Padding','compact');
+        title(tl, ['Kraftrichtung, ' erase(Name,'.csv')], 'Interpreter','none');
+    
+        nexttile;
+        scatter(xF0(m), yF0(m), 6, t(m), 'filled'); colorbar;
+        axis equal; grid on;
+        xlabel('X [N]'); ylabel('Y [N]'); title('Vor der Drehung');
+    
+        nexttile;
+        scatter(xF(m), yF(m), 6, t(m), 'filled'); cb = colorbar; cb.Label.String = 'Time [s]';
+        axis equal; grid on;
+        xlabel('X [N]'); ylabel('Y [N]'); title(sprintf('Nach der Drehung (%.1f°)', rad2deg(phi)));
+    
+        % Zeitverlauf der Pitch-Kraft vorher / nachher
+        figure('Color','w'); hold on; grid on;
+        plot(t, xF0, 'DisplayName', 'vorher');
+        plot(t, xF,  'DisplayName', 'nachher');
+        xline(winStall, '--k', 'HandleVisibility', 'off');
+        xlabel('Time [s]'); ylabel('Pitch-Kraft [N]'); legend;
+    end
+
     if showLoad
         plotLoadCells(t, rawX, rawY, xF, yF, rawXY, xyF, plotRawData, Name, saveFig, plotFolder, aspectRatio,15, plotTitle);
     end
@@ -75,12 +125,12 @@ for i = fileIdx
         plotAcceleration(t, ax, ay, az, a, Name, ...
         'SaveFig', saveFig, 'OutputFolder', plotFolder, ...
         'AspectRatio', 4/3, 'InG', true, 'Smooth', 5, ...
-        'Title', {'WindUp Left', 'Klappen: Stufe 0'});
+        'Title', Name);
     end
     if showFligtStats
         T = flightStats(data, t, xF, yF, a, tWindow, names);
         flightStatsLatex(T, 'Caption', plotTitle, ...
-                    'Label', "tab:"+replace(replace(plotTitle,", "," ")," ", "_"), 'Clipboard', true);
+                    'Label', "tab:"+replace(replace(plotTitle,", "," ")," ", "_"), 'Clipboard', true, 'Bank',false);
     end 
     if showForce
         forceStats(t, xF, yF, tWindow, Name);
@@ -88,4 +138,5 @@ for i = fileIdx
     if showBank
         bank = bankAngle(data, t, a, tWindow);
     end
+    
 end
