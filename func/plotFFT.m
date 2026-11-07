@@ -1,11 +1,23 @@
 function plotFFT(rawX, rawY, x_filtered,y_filtered, ...
-                Fs,f_cutoff, t,Name,plotRawData)
+                Fs,f_cutoff, t,Name,plotRawData, ...
+                saveFig, outputFolder, aspectRatio, widthCm)
 %PLOTFFT Plot X and Y FFT in two vertically stacked graphs.
 %
 % Inputs:
 %   fftData      - structure containing FFT data
 %   frequencies  - automatically detected vibration frequencies
 %   Fs           - sampling frequency [Hz]
+%   saveFig      - true: save figure as SVG        (default false)
+%   outputFolder - target folder                   (default './Plots/')
+%   aspectRatio  - width/height                    (default 15/11)
+%   widthCm      - figure width in cm              (default 15)
+
+    if nargin < 10 || isempty(saveFig),      saveFig = false;           end
+    if nargin < 11 || isempty(outputFolder), outputFolder = './Plots/'; end
+    if nargin < 12 || isempty(aspectRatio),  aspectRatio = 15/11;       end
+    if nargin < 13 || isempty(widthCm),      widthCm = 15;              end
+    Name = erase(Name, ".csv");
+    heightCm = widthCm / aspectRatio;
 
    %% ============================================================
 % FFT - RAW VS FILTERED
@@ -37,7 +49,8 @@ Y_filtered_amp = 2 * abs(Y_filtered_fft(1:nHalf)) / N;
 
 %% FFT X
 
-figure('Name',"FFT"+Name,'NumberTitle','off');
+fig = figure('Name',"FFT"+Name,'NumberTitle','off','Color','w', ...
+             'Units','centimeters','Position',[2 2 widthCm heightCm]);
 subplot(2,1,1);
 
 
@@ -101,5 +114,9 @@ end
 
 xlim([0 Fs/2]);
 
+%% Save as SVG
+if saveFig
+    saveFigure(fig, outputFolder, Name + "_FFT", widthCm, heightCm);
+end
 
 end

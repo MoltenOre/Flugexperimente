@@ -1,9 +1,19 @@
-function plotGPSVelocity(data, cutoffFreq, maxDeviation)
+function plotGPSVelocity(data, cutoffFreq, maxDeviation, options)
     % data:         table with columns TIME, NAME, UID, VAR, RAW, UNIT
     % cutoffFreq:   FFT low-pass cutoff [Hz]          (default 0.15)
     % maxDeviation: max. position deviation of an outlier [m] (default 30)
-    if nargin < 2, cutoffFreq   = 0.15; end
-    if nargin < 3, maxDeviation = 30;   end
+    % Name-Value options:
+    %   SaveFig, OutputFolder, AspectRatio, WidthCm, Name (Dateiname-Prefix)
+    arguments
+        data table
+        cutoffFreq   (1,1) double  = 0.05
+        maxDeviation (1,1) double  = 30
+        options.SaveFig      (1,1) logical = false
+        options.OutputFolder (1,1) string  = "./Plots/"
+        options.AspectRatio  (1,1) double  = 15/11
+        options.WidthCm      (1,1) double  = 15
+        options.Name         (1,1) string  = "Flight"
+    end
 
     %% Select GPS data (UID PvU)
     idxLat = strcmp(string(data.UID), "PvU") & strcmp(string(data.VAR), "Coordinates-Latitude");
@@ -62,12 +72,20 @@ function plotGPSVelocity(data, cutoffFreq, maxDeviation)
     tVel  = (tPos(1:end-1) + tPos(2:end)) / 2;
 
     %% Plot
-    figure;
+    heightCm = options.WidthCm / options.AspectRatio;
+    fig = figure('Color', 'w', 'Units', 'centimeters', ...
+                 'Position', [2 2 options.WidthCm heightCm]);
     plot(tVel, v_kmh, 'LineWidth', 1.2);
     grid on;
     xlabel('Time [s]');
     ylabel('Velocity [km/h]');
     title(sprintf('Filtered GPS Velocity (FFT cutoff %.3g Hz)', cutoffFreq));
+
+    %% Save as SVG
+    if options.SaveFig
+        saveFigure(fig, options.OutputFolder, erase(options.Name, ".csv") + "_GPS", ...
+                   options.WidthCm, heightCm);
+    end
 end
 
 

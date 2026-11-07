@@ -2,20 +2,20 @@ clear; clc; close all;
 
 %% ===================== SETTINGS =========================
 addpath(genpath('func'));
-dataFolder  = './Daten/Stall/';
-fileIdx     =3;            % which file(s): 1, 1:3, or 'all'
+dataFolder  = './Daten/SteepTurn/';
+fileIdx     = 3;            % which file(s): 1, 1:3, or 'all'
 
-f_cutoff    = 4;          % FFT cutoff frequency [Hz]
+f_cutoff    = 3;          % FFT cutoff frequency [Hz]
 sgWindow    = 201;          % Savitzky-Golay window [samples]
 
 % Plot switches
-plotRawData = false;        % show raw data in the plots
+plotRawData = true;        % show raw data in the plots
 showLoad    = true;         % load cell plots
-showFFT     = false;        % FFT plots
-showGPS     = false;         % GPS velocity
-showAlt     = false;         % altitude check
+showFFT     = true;        % FFT plots
+showGPS     = true;         % GPS velocity
+showAlt     = true;         % altitude check
 showAcc     = true;
-showBank    = false;
+showBank    = true;
 showFligtStats = true;
 
 rotateInput = true;
@@ -27,7 +27,7 @@ showForce   = false;
 
 saveFig     = true;
 aspectRatio = 4/3;
-plotFolder  = "./Plots/"+erase(dataFolder, './Daten/');
+
 
 
 %% WindUp
@@ -37,17 +37,16 @@ plotFolder  = "./Plots/"+erase(dataFolder, './Daten/');
 %names = ["10°" "20°" "30°" "45°" "60°"];
 
 %% Speed Variation
-%tWindow     = [4,34;42,60];
-%names       = ["Acceleration", "Deacceleration"];
+tWindow     = [1,200];%34;42
+names       = ["Acceleration", "Deacceleration"];
 
 %% Stall
-tWindow     = [3 55]; %l1
+%tWindow     = [3 55]; %l1
 %tWindow     = [23,55];%r2
 %tWindow     = [5,57]; %Flaps
-winStall    = tWindow;     % Beispiel: von 20 s bis 30 s
-names       = ["Stall"];
+%names       = ["Stall"];
 
-
+winStall    = tWindow;
 %% ===================== FILES =========================
 files = dir(fullfile(dataFolder, '*.csv'));
 if ischar(fileIdx) || isstring(fileIdx)      % 'all'
@@ -62,6 +61,7 @@ for i = fileIdx
     Name     = files(i).name;
     data     = readRawCSV(filename);
     plotTitle= erase(Name,".csv");
+    plotFolder  = "./Plots/"+erase(dataFolder, './Daten/')+plotTitle;
 
     [t, rawX, rawY, rawXY, Fs, ax, ay, az, a] = readLoadCellData(data);
 
@@ -87,7 +87,7 @@ for i = fileIdx
         end
         % Vorher / Nachher nebeneinander
         m = t >= winStall(1) & t <= winStall(2);
-        figure('Color','w','Units','centimeters','Position',[2 2 18 8]);
+        figRot1 = figure('Color','w','Units','centimeters','Position',[2 2 18 8]);
         tl = tiledlayout(1,2,'TileSpacing','compact','Padding','compact');
         title(tl, ['Kraftrichtung, ' erase(Name,'.csv')], 'Interpreter','none');
     
@@ -102,24 +102,35 @@ for i = fileIdx
         xlabel('X [N]'); ylabel('Y [N]'); title(sprintf('Nach der Drehung (%.1f°)', rad2deg(phi)));
     
         % Zeitverlauf der Pitch-Kraft vorher / nachher
-        figure('Color','w'); hold on; grid on;
+        if saveFig
+            saveFigure(figRot1, plotFolder, plotTitle + "_Rotation_Scatter", 18, 8);
+        end
+
+        figRot2 = figure('Color','w','Units','centimeters','Position',[2 2 15 15/aspectRatio]);
+        hold on; grid on;
         plot(t, xF0, 'DisplayName', 'vorher');
         plot(t, xF,  'DisplayName', 'nachher');
         xline(winStall, '--k', 'HandleVisibility', 'off');
         xlabel('Time [s]'); ylabel('Pitch-Kraft [N]'); legend;
+        if saveFig
+            saveFigure(figRot2, plotFolder, plotTitle + "_Rotation_Verlauf", 15, 15/aspectRatio);
+        end
     end
 
     if showLoad
         plotLoadCells(t, rawX, rawY, xF, yF, rawXY, xyF, plotRawData, Name, saveFig, plotFolder, aspectRatio,15, plotTitle);
     end
     if showFFT
-        plotFFT(rawX, rawY, xF, yF, Fs, f_cutoff, t, Name, plotRawData);
+        plotFFT(rawX, rawY, xF, yF, Fs, f_cutoff, t, Name, plotRawData, ...
+                saveFig, plotFolder, aspectRatio, 15);
     end
     if showGPS
-        plotGPSVelocity(data);
+        plotGPSVelocity(data, 0.05, 30, 'SaveFig', saveFig, 'OutputFolder', plotFolder, ...
+                        'AspectRatio', aspectRatio, 'Name', Name);
     end
     if showAlt
-        plotAltitudeData(data);
+        plotAltitudeData(data, 0.05, 'SaveFig', saveFig, 'OutputFolder', plotFolder, ...
+                         'AspectRatio', aspectRatio, 'Name', Name);
     end
     if showAcc
         plotAcceleration(t, ax, ay, az, a, Name, ...

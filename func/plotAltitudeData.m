@@ -1,7 +1,17 @@
-function plotAltitudeData(data, fc_gps)
+function plotAltitudeData(data, fc_gps, options)
     % data:   table with columns TIME, NAME, UID, VAR, RAW, UNIT
     % fc_gps: FFT cutoff for GPS altitude [Hz] (default 0.05 Hz = 20 s period)
-    if nargin < 2, fc_gps = 0.05; end
+    % Name-Value options:
+    %   SaveFig, OutputFolder, AspectRatio, WidthCm, Name (Dateiname-Prefix)
+    arguments
+        data table
+        fc_gps (1,1) double = 0.05
+        options.SaveFig      (1,1) logical = false
+        options.OutputFolder (1,1) string  = "./Plots/"
+        options.AspectRatio  (1,1) double  = 15/11
+        options.WidthCm      (1,1) double  = 15
+        options.Name         (1,1) string  = "Flight"
+    end
 %thisi s test
     % ---- common time origin ----
     allTime = data.TIME;
@@ -10,7 +20,10 @@ function plotAltitudeData(data, fc_gps)
     end
     t0 = min(allTime);
 
-    figure; hold on; grid on;
+    heightCm = options.WidthCm / options.AspectRatio;
+    fig = figure('Color', 'w', 'Units', 'centimeters', ...
+                 'Position', [2 2 options.WidthCm heightCm]);
+    hold on; grid on;
     leg = {};
 
     % ---- Barometric altitude ----
@@ -45,6 +58,12 @@ function plotAltitudeData(data, fc_gps)
     ylabel('Relative altitude [m]');
     title('Altitude check: barometer vs. GPS');
     if ~isempty(leg), legend(leg, 'Location', 'best'); end
+
+    % ---- Save as SVG ----
+    if options.SaveFig
+        saveFigure(fig, options.OutputFolder, erase(options.Name, ".csv") + "_Altitude", ...
+                   options.WidthCm, heightCm);
+    end
 end
 
 function [tu, yf] = fftLowpass(t, v, fc)
