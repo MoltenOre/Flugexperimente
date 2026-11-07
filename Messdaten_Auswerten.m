@@ -3,23 +3,37 @@ clear; clc; close all;
 %% ===================== SETTINGS =========================
 addpath(genpath('func'));
 dataFolder  = './Daten/WindUp/';
-plotTitle = "WindUp Turn Left, Flaps 0";
-fileIdx     = 1;            % which file(s): 1, 1:3, or 'all'
+fileIdx     = 3;            % which file(s): 1, 1:3, or 'all'
 
-f_cutoff    = 2;          % FFT cutoff frequency [Hz]
+f_cutoff    = 4;          % FFT cutoff frequency [Hz]
 sgWindow    = 201;          % Savitzky-Golay window [samples]
 
 % Plot switches
 plotRawData = false;        % show raw data in the plots
 showLoad    = true;         % load cell plots
 showFFT     = false;        % FFT plots
-showGPS     = true;         % GPS velocity
-showAlt     = true;         % altitude check
+showGPS     = false;         % GPS velocity
+showAlt     = false;         % altitude check
 showAcc     = true;
+showBank    = false;
+showFligtStats = true;
+
+showForce   = false;
+%tWindow     = [2,51];      
+%tWindow     = [11,40]; %Steep Turn Left    
+%tWindow     = [2,51]; %Steep Right        
 
 saveFig     = true;
 aspectRatio = 4/3;
-plotFolder = "./Plots/"+erase(dataFolder, './Daten/');
+plotFolder  = "./Plots/"+erase(dataFolder, './Daten/');
+
+
+%% WindUp
+tWindow  = [9 12.5; 21 25; 29 34.5; 37.5 42; 43.8 47.8]; %R
+%tWindow  = [15.5 21; 27.5 30.5; 34 37.5; 44 47.5; 50.5 55]; %L
+%tWindow  = [35.5 38.5; 44.5 48.5; 50.5 53.5; 57 61.5; 64 67]; %2
+names = ["10°" "20°" "30°" "45°" "60°"];
+
 
 %% ===================== FILES =========================
 files = dir(fullfile(dataFolder, '*.csv'));
@@ -34,6 +48,7 @@ for i = fileIdx
     filename = fullfile(files(i).folder, files(i).name);
     Name     = files(i).name;
     data     = readRawCSV(filename);
+    plotTitle= erase(Name,".csv");
 
     [t, rawX, rawY, rawXY, Fs, ax, ay, az, a] = readLoadCellData(data);
 
@@ -61,5 +76,16 @@ for i = fileIdx
         'SaveFig', saveFig, 'OutputFolder', plotFolder, ...
         'AspectRatio', 4/3, 'InG', true, 'Smooth', 5, ...
         'Title', {'WindUp Left', 'Klappen: Stufe 0'});
+    end
+    if showFligtStats
+        T = flightStats(data, t, xF, yF, a, tWindow, names);
+        flightStatsLatex(T, 'Caption', plotTitle, ...
+                    'Label', "tab:"+replace(replace(plotTitle,", "," ")," ", "_"), 'Clipboard', true);
+    end 
+    if showForce
+        forceStats(t, xF, yF, tWindow, Name);
+    end
+    if showBank
+        bank = bankAngle(data, t, a, tWindow);
     end
 end
