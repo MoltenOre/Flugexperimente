@@ -1,7 +1,8 @@
 function [xr, yr, phi] = derotateForces(t, x, y, window)
+%   window: [tStart tEnd] oder N x 2 Matrix (alle Fenster zusammen)
 %DEROTATEFORCES Dreht (x,y) so, dass die Hauptkraftrichtung auf der X-Achse liegt.
 %   Annahme: im Fenster überwiegt die Pitch-Kraft.
-    m = t >= window(1) & t <= window(2);
+    m = inWindows(t, window);
     C = cov([x(m) y(m)]);
     [V, D] = eig(C);
     [~, i] = max(diag(D));

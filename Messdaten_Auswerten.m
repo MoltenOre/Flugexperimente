@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% ===================== SETTINGS =========================
 addpath(genpath('func'));
-dataFolder  = './Daten/SteepTurn/';
+dataFolder  = './Daten/Platzrunde/';
 fileIdx     = 3;            % which file(s): 1, 1:3, or 'all'
 
 f_cutoff    = 3;          % FFT cutoff frequency [Hz]
@@ -28,17 +28,22 @@ showForce   = false;
 saveFig     = true;
 aspectRatio = 4/3;
 
-
+%%Platzrunde
+tWindow    =   [1,151]; %Take-Off
+%tWindow    =   [1,234];%Landung
+%tWindow    =   [1,60];%Haltekraft
+%tWindow     =   [1,17];%Trim Pull Up
+names   =       ["Take-Off"];
 
 %% WindUp
-%tWindow  = [9 12.5; 21 25; 29 34.5; 37.5 42; 43.8 47.8]; %R
 %tWindow  = [15.5 21; 27.5 30.5; 34 37.5; 44 47.5; 50.5 55]; %L
+%tWindow  = [9 12.5; 21 25; 29 34.5; 37.5 42; 43.8 47.8]; %R
 %tWindow  = [35.5 38.5; 44.5 48.5; 50.5 53.5; 57 61.5; 64 67]; %2
 %names = ["10°" "20°" "30°" "45°" "60°"];
 
 %% Speed Variation
-tWindow     = [1,200];%34;42
-names       = ["Acceleration", "Deacceleration"];
+%tWindow     = [1,34;42,61];%
+%names       = ["Acceleration", "Deacceleration"];
 
 %% Stall
 %tWindow     = [3 55]; %l1
@@ -86,7 +91,7 @@ for i = fileIdx
             rawX = rawXr;  rawY = rawYr;
         end
         % Vorher / Nachher nebeneinander
-        m = t >= winStall(1) & t <= winStall(2);
+        m = inWindows(t, winStall);
         figRot1 = figure('Color','w','Units','centimeters','Position',[2 2 18 8]);
         tl = tiledlayout(1,2,'TileSpacing','compact','Padding','compact');
         title(tl, ['Kraftrichtung, ' erase(Name,'.csv')], 'Interpreter','none');
@@ -110,7 +115,7 @@ for i = fileIdx
         hold on; grid on;
         plot(t, xF0, 'DisplayName', 'vorher');
         plot(t, xF,  'DisplayName', 'nachher');
-        xline(winStall, '--k', 'HandleVisibility', 'off');
+        xline(winStall(:), '--k', 'HandleVisibility', 'off');
         xlabel('Time [s]'); ylabel('Pitch-Kraft [N]'); legend;
         if saveFig
             saveFigure(figRot2, plotFolder, plotTitle + "_Rotation_Verlauf", 15, 15/aspectRatio);
