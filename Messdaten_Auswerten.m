@@ -2,14 +2,14 @@ clear; clc; close all;
 
 %% ===================== SETTINGS =========================
 addpath(genpath('func'));
-dataFolder  = './Daten/Platzrunde/';
+dataFolder  = './Daten/Stall/';
 fileIdx     = 3;            % which file(s): 1, 1:3, or 'all'
 
 f_cutoff    = 3;          % FFT cutoff frequency [Hz]
 sgWindow    = 201;          % Savitzky-Golay window [samples]
 
 % Plot switches
-plotRawData = true;        % show raw data in the plots
+plotRawData = false;        % show raw data in the plots
 showLoad    = true;         % load cell plots
 showFFT     = true;        % FFT plots
 showGPS     = true;         % GPS velocity
